@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{{title}} ({{year}})</h2>
+
+<body>
+    Directed by {{director}} <br>
+    {{genre}} from {{country}} <br>
+    The IMDB rating is {{imdb_score}} <br>
+    The Metacritic score is {{meta_score}} <br>
+
+</body>
+
+<br>
+<a href="/">Return to homepage</a>
+
+{% endblock %}
