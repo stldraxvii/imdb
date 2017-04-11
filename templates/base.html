@@ -5,10 +5,101 @@
         <title>MOVIES!!!</title>
     </head>
 
+    <style type="text/css">
+        .error {
+            color:red;
+        }
+        h1 {
+            text-decoration: underline;
+        }
+        body {
+            background-color:black;
+            color: white;
+            width: 100%;
+            max-width: 100%;
+            text-shadow: 3px 2px 5px #000000;
+            counter-reset: mycount;           /* Set the counter to 0 */
+        }
+        header, section, footer {
+            margin-left:1em;
+            margin-right:1em;
+            background-color:#222222;
+        }
+        .mycount:before{
+            counter-increment: mycount;      /* Increment the counter */
+            content: counter(mycount) ". "; /* Display the counter */
+        }
+        nav ul {
+        	padding: 0;
+            font-size:1.2em;
+        }
+
+        nav ul li {
+        	display: inline-block;
+        	margin-right: 1.25em;
+        }
+        input {
+            background-color: #222222;
+            color: white;
+        }
+        input[type=submit] {
+            padding:5px 15px;
+            background:#ccc;
+            border:0 none;
+            cursor:pointer;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            color: black;
+        }
+        .button {
+            border-style:outset;
+            border-width: 2px;
+            border-color: #440088;
+            border-radius: 2px;
+            font-weight: bold;
+            background: white;
+        }
+        a:link{
+            color:#288491;
+            text-decoration:none;
+        }
+
+        a:visited {
+            color:#8645a0;
+        }
+
+        a:hover {
+            text-decoration: none;
+            color:#3acde0;
+        }
+        .header{
+            text-decoration: underline;
+        }
+        .title {
+            font-weight:bold;
+            text-decoration:underline;
+        }
+        td {
+            padding:2px;
+        }
+
+
+    </style>
+
+
     <body>
         <h1>
             Matt's Movie Madness
         </h1>
+        <header>
+            <nav>
+                <ul>
+                    <li><a href="/best/">The Best </a></li>
+                    <li><a href="/oldest/">The Oldest</a></li>
+                    <li><a href="/newest/">The Newest </a></li>
+                </ul>
+            </nav>
+        </header>
 
         {% block content%}
         {% endblock %}

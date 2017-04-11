@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Hello!</h2>
+<table><ol>
+    <tr class="header">
+        <td></td>
+        <td>Year</td>
+        <td>Title</td>
+        <td>Director</td>
+        <td>Country</td>
+        <td>Genre</td>
+        <td>IMDB rating</td>
+        <td>Metacritc rating</td>
+        <td>Average rating</td>
+    </tr>
+        {% for entry in entries %}
+            <tr>
+                    <td><span class="mycount"></span></td>
+                    <td>{{entry.year}}</td>
+                    <td class="title"><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
+                    <td>{{entry.director}}</td>
+                    <td>{{entry.country}}</td>
+                    <td>{{entry.genre}}</td>
+                    <td>{{entry.imdb}}</td>
+                    <td>{{entry.meta}}</td>
+                    <td>{{entry.average}}</td>
+                </li>
+            </tr>
+        {% endfor %}
+</ol></table>
+<br>
+<a class = "button" href="/">Return to homepage</a>
+{% endblock %}

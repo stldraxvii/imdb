@@ -1,17 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-
+<!--
 <h2>{{title}} ({{year}})</h2>
-
 <body>
     Directed by {{director}} <br>
     {{genre}} from {{country}} <br>
     The IMDB rating is {{imdb_score}} <br>
     The Metacritic score is {{meta_score}} <br>
-
+    The average rating is {{average}} <br>
 </body>
-
 <br>
+-->
+<table>
+    <tr class="header">
+        <td>Year</td>
+        <td>Title</td>
+        <td>Director</td>
+        <td>Country</td>
+        <td>Genre</td>
+        <td>IMDB rating</td>
+        <td>Metacritc rating</td>
+        <td>Average rating</td>
+    </tr>
+    <tr>
+        <td>{{entry.year}}</td>
+        <td><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
+        <td>{{entry.director}}</td>
+        <td>{{entry.country}}</td>
+        <td>{{entry.genre}}</td>
+        <td>{{entry.imdb}}</td>
+        <td>{{entry.meta}}</td>
+        <td>{{entry.average}}</td>
+    </tr>
+</table>
+<br>
+
 <a href="/">Return to homepage</a>
 
 {% endblock %}

@@ -24,6 +24,19 @@ from google.appengine.ext import db
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
 
+class Entry(db.Model):
+    year  = db.StringProperty(required = True)
+    title = db.StringProperty(required = True)
+    director = db.StringProperty(required = True)
+    country = db.StringProperty(required = True)
+    genre = db.StringProperty(required = True)
+    imdb = db.StringProperty(required = True)
+    meta = db.StringProperty(required = True)
+    average = db.StringProperty(required = True)
+    imdb_id = db.StringProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+
+
 class Handler(webapp2.RequestHandler):
     def write (self, *a, **kw):
         self.response.out.write(*a,**kw)
@@ -38,6 +51,18 @@ class Handler(webapp2.RequestHandler):
     def render_form(self, title="", error=""):
         self.render("form.html", title=title, error=error)
 
+    def render_best(self):
+        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY average DESC")
+        self.render("list.html", entries = entries)
+
+    def render_newest(self):
+        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY year DESC")
+        self.render("list.html", entries = entries)
+
+    def render_oldest(self):
+        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY year ASC")
+        self.render("list.html", entries = entries)
+
 class MainHandler(Handler):
     def get(self):
         title = self.request.get("wrong-title")
@@ -46,15 +71,22 @@ class MainHandler(Handler):
 
     def post(self):
         title = self.request.get("title")
+        year = self.request.get("year")
         formatted_title = title.replace(" ","-")
 
-        self.redirect("/movie/?title="+formatted_title)
+        self.redirect("/movie/?title="+formatted_title+"&year="+year)
 
 class MovieHandler(Handler):
     def get(self):
         title = self.request.get("title")
+        year = self.request.get("year")
         fixed_title = title.replace("-","+")
-        page = urllib2.urlopen("http://www.omdbapi.com/?t={0}&r=xml".format(fixed_title))
+
+        if year == "":
+            page = urllib2.urlopen("http://www.omdbapi.com/?t={0}&r=xml".format(fixed_title))
+        else:
+            page = urllib2.urlopen("http://www.omdbapi.com/?t={0}&y={1}&r=xml".format(fixed_title, year))
+
         contents = page.read()
         d = minidom.parseString(contents)
 
@@ -62,19 +94,60 @@ class MovieHandler(Handler):
             error = "Please enter the correct title of a movie (check your spelling)!"
             self.redirect("/?wrong-title="+fixed_title+"&error="+error)
         else:
-            id = d.getElementsByTagName("movie")[0].attributes.getNamedItem("imdbID").value
+            imdb_id = d.getElementsByTagName("movie")[0].attributes.getNamedItem("imdbID").value
             movie_title = d.getElementsByTagName("movie")[0].attributes.getNamedItem("title").value
             director = d.getElementsByTagName("movie")[0].attributes.getNamedItem("director").value
             country = d.getElementsByTagName("movie")[0].attributes.getNamedItem("country").value
             genre = d.getElementsByTagName("movie")[0].attributes.getNamedItem("genre").value
             imdb_score = d.getElementsByTagName("movie")[0].attributes.getNamedItem("imdbRating").value
             meta_score = d.getElementsByTagName("movie")[0].attributes.getNamedItem("metascore").value
-            date = d.getElementsByTagName("movie")[0].attributes.getNamedItem("released").value
-            day, month, year = date.split()
+            year = d.getElementsByTagName("movie")[0].attributes.getNamedItem("year").value
 
-            self.render("movie.html", title=movie_title, director=director, country=country, genre=genre, imdb_score=imdb_score, meta_score=meta_score, year=year)
+            if meta_score != "N/A":
+                imdb = float(imdb_score) * 10
+                meta = float(meta_score)
+                average = (imdb + meta) / 20
+                average = str(average)
+            else:
+                average = imdb_score
+
+            duplicate = False
+            entries = db.GqlQuery("SELECT * FROM Entry")
+            for entry in entries:
+                if imdb_id == entry.imdb_id:
+                    duplicate = True
+
+            if duplicate == True:
+                error = "This movie is already in the database!"
+                self.redirect("/?wrong-title="+fixed_title+"&error="+error)
+            else:
+                a = Entry(year = year, title = movie_title, director = director, country = country, genre = genre, imdb = imdb_score, meta = meta_score, imdb_id = imdb_id, average = average)
+                a.put()
+                self.redirect("/movie/{0}".format(a.key().id()))
+
+class ViewEntryHandler(Handler):
+    def get(self, id):
+        id = int(id)
+        entry = Entry.get_by_id(id)
+        self.render("movie.html",entry=entry)
+
+class BestHandler(Handler):
+    def get(self):
+        self.render_best()
+
+class NewestHandler(Handler):
+    def get(self):
+        self.render_newest()
+
+class OldestHandler(Handler):
+    def get(self):
+        self.render_oldest()
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
-    ('/movie/', MovieHandler)
+    ('/movie/', MovieHandler),
+    webapp2.Route('/movie/<id:\d+>', ViewEntryHandler),
+    ('/best/', BestHandler),
+    ('/newest/', NewestHandler),
+    ('/oldest/', OldestHandler)
 ], debug=True)
