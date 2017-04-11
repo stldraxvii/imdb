@@ -51,19 +51,19 @@ class Handler(webapp2.RequestHandler):
     def render_form(self, title="", error=""):
         self.render("form.html", title=title, error=error)
 
-    def render_best(self):
-        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY average DESC")
+    def render_list(self, sort, order="ASC"):
+        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY {0} {1}".format(sort, order))
         self.render("list.html", entries = entries)
 
-    def render_newest(self):
-        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY year DESC")
-        self.render("list.html", entries = entries)
-
-    def render_oldest(self):
-        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY year ASC")
-        self.render("list.html", entries = entries)
 
 class MainHandler(Handler):
+    def get(self):
+        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY average DESC LIMIT 10")
+        newest = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
+        self.render("main.html", entries = entries, newest = newest)
+
+
+class FormHandler(Handler):
     def get(self):
         title = self.request.get("wrong-title")
         error = self.request.get("error")
@@ -73,8 +73,8 @@ class MainHandler(Handler):
         title = self.request.get("title")
         year = self.request.get("year")
         formatted_title = title.replace(" ","-")
-
         self.redirect("/movie/?title="+formatted_title+"&year="+year)
+
 
 class MovieHandler(Handler):
     def get(self):
@@ -92,7 +92,7 @@ class MovieHandler(Handler):
 
         if d.getElementsByTagName("error").item.__self__:
             error = "Please enter the correct title of a movie (check your spelling)!"
-            self.redirect("/?wrong-title="+fixed_title+"&error="+error)
+            self.redirect("/form/?wrong-title="+fixed_title+"&error="+error)
         else:
             imdb_id = d.getElementsByTagName("movie")[0].attributes.getNamedItem("imdbID").value
             movie_title = d.getElementsByTagName("movie")[0].attributes.getNamedItem("title").value
@@ -119,11 +119,13 @@ class MovieHandler(Handler):
 
             if duplicate == True:
                 error = "This movie is already in the database!"
-                self.redirect("/?wrong-title="+fixed_title+"&error="+error)
+                self.redirect("/form/?wrong-title="+fixed_title+"&error="+error)
             else:
-                a = Entry(year = year, title = movie_title, director = director, country = country, genre = genre, imdb = imdb_score, meta = meta_score, imdb_id = imdb_id, average = average)
+                a = Entry(year = year, title = movie_title, director = director, country = country,
+                    genre = genre, imdb = imdb_score, meta = meta_score, imdb_id = imdb_id, average = average)
                 a.put()
                 self.redirect("/movie/{0}".format(a.key().id()))
+
 
 class ViewEntryHandler(Handler):
     def get(self, id):
@@ -131,23 +133,91 @@ class ViewEntryHandler(Handler):
         entry = Entry.get_by_id(id)
         self.render("movie.html",entry=entry)
 
+
 class BestHandler(Handler):
     def get(self):
-        self.render_best()
+        self.render_list("average", "DESC")
+
 
 class NewestHandler(Handler):
     def get(self):
-        self.render_newest()
+        self.render_list("year", "DESC")
+
 
 class OldestHandler(Handler):
     def get(self):
-        self.render_oldest()
+        self.render_list("year")
+
+
+class AlphaFilmHandler(Handler):
+    def get(self):
+        self.render_list("title")
+
+
+class AlphaDirHandler(Handler):
+    def get(self):
+        self.render_list("director")
+
+
+class SearchHandler(Handler):
+    def get(self):
+        self.render("search.html")
+
+    def post(self):
+        title = self.request.get("title")
+        year = self.request.get("year")
+        director = self.request.get("director")
+        entries = ''
+        count = 0
+
+        if title != "":
+            title = title.title()
+            title = "'" + title + "'"
+            title = "title = " + title
+            count = count + 1
+
+        if year != "":
+            year ="'" + year + "'"
+            if count == 1:
+                year = "AND year = " + year
+                count = 0
+            else:
+                year = "year = " + year
+            count = count + 1
+
+        if director != "":
+            director = director.title()
+            director = "'" + director + "'"
+            if count == 1:
+                director = "AND director = "  + director
+                count = 0
+            else:
+                director = "director = "  + director
+            count = count + 1
+
+        if title != "" or director != "" or year != "":
+            search = "WHERE " + title + year + director
+        else:
+            search = ""
+
+        entries = db.GqlQuery("SELECT * FROM Entry {0} ORDER BY average DESC".format(search))
+
+        if entries.count() != 0:
+            self.render("list.html", entries = entries)
+        else:
+            error = "Sorry, but we could not find your movie. Try checking your spelling, or adding your movie to the database!"
+            self.render("search.html", error = error)
+
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
+    ('/form/', FormHandler),
     ('/movie/', MovieHandler),
     webapp2.Route('/movie/<id:\d+>', ViewEntryHandler),
     ('/best/', BestHandler),
     ('/newest/', NewestHandler),
-    ('/oldest/', OldestHandler)
+    ('/oldest/', OldestHandler),
+    ('/search/', SearchHandler),
+    ('/alphafilm/', AlphaFilmHandler),
+    ('/alphadir/', AlphaDirHandler)
 ], debug=True)

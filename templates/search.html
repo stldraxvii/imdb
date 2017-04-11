@@ -1,19 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Add a movie to the database!</h2>
+<h2>Look up a movie!</h2>
+<h3>Please note searches must be exact!</h3>
+<h4>Results will be returned sorted by rating</h4>
 <body>
     <form method="post">
         <table>
             <tr>
                 <label><td>
                     <div>Title</div>
-                    <input type="text" name="title" value="{{title}}">
+                    <input type="text" name="title">
                 </label></td>
                 <label><td>
                     <div>Year</div>
                     <input type="text" name="year">
-                <label></td>
+                </label></td>
+                <label><td>
+                    <div>Director</div>
+                    <input type="text" name="director">
+                </label></td>
             </tr>
         </table>
         <br>
@@ -22,6 +28,7 @@
         <input type="submit">
     </form>
 </body>
+
 
 
 

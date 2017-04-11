@@ -1,17 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Hello!</h2>
-<table><ol>
+<h2>Welcome to the KMDB!</h2>
+<h4>Current 10 Best Films:</h4>
+<table>
     <tr class="header">
         <td></td>
         <td>Year</td>
         <td>Title</td>
         <td>Director</td>
         <td>Country</td>
-        <td>Genre</td>
-        <td>IMDB rating</td>
-        <td>Metacritc rating</td>
         <td>Average rating</td>
     </tr>
         {% for entry in entries %}
@@ -21,15 +19,21 @@
                     <td class="title"><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
                     <td>{{entry.director}}</td>
                     <td>{{entry.country}}</td>
-                    <td>{{entry.genre}}</td>
-                    <td>{{entry.imdb}}</td>
-                    <td>{{entry.meta}}</td>
                     <td>{{entry.average}}</td>
-                </li>
             </tr>
         {% endfor %}
-</ol></table>
+</table>
+<table>
+    <h4>Most Recent Entries:</h4>
+        {% for new in newest %}
+            <tr>
+                <td>{{new.year}}</td>
+                <td class="title"><a href="/movie/{{new.key().id()}}">{{new.title}}</a></td>
+                <td>{{new.director}}</td>
+                <td>{{new.average}}</td>
+            </tr>
+        {% endfor %}
+</table>
 <br>
-<a class = "button" href="/">Return to homepage</a>
-<a class = "button" href="/search/">Search again!</a>
+
 {% endblock %}

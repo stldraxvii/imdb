@@ -17,7 +17,6 @@
             color: white;
             width: 100%;
             max-width: 100%;
-            text-shadow: 3px 2px 5px #000000;
             counter-reset: mycount;           /* Set the counter to 0 */
         }
         header, section, footer {
@@ -57,7 +56,7 @@
             border-color: #440088;
             border-radius: 2px;
             font-weight: bold;
-            background: white;
+            background: #AAAAAA;
         }
         a:link{
             color:#288491;
@@ -83,20 +82,23 @@
             padding:2px;
         }
 
-
     </style>
-
 
     <body>
         <h1>
-            Matt's Movie Madness
+            <a href='/'>Kemper Movie DataBase</a>
         </h1>
+
         <header>
             <nav>
                 <ul>
+                    <li><a href="/form/">Add a Movie</a></li>
                     <li><a href="/best/">The Best </a></li>
                     <li><a href="/oldest/">The Oldest</a></li>
                     <li><a href="/newest/">The Newest </a></li>
+                    <li><a href="/alphafilm/">By Film</a></li>
+                    <li><a href="/alphadir/">By Director</a></li>
+                    <li><a href="/search/">Advanced Search</a></li>
                 </ul>
             </nav>
         </header>
