@@ -60,7 +60,8 @@ class MainHandler(Handler):
     def get(self):
         entries = db.GqlQuery("SELECT * FROM Entry ORDER BY average DESC LIMIT 10")
         newest = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 10")
-        self.render("main.html", entries = entries, newest = newest)
+        worst = db.GqlQuery("SELECT * FROM Entry ORDER BY average ASC LIMIT 10")
+        self.render("main.html", entries = entries, newest = newest, worst = worst)
 
 
 class FormHandler(Handler):

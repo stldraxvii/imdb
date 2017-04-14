@@ -31,6 +31,12 @@ indexes:
   properties:
   - name: title
   - name: average
+    direction: desc
+
+- kind: Entry
+  properties:
+  - name: title
+  - name: average
 
 - kind: Entry
   properties:

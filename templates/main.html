@@ -24,6 +24,18 @@
         {% endfor %}
 </table>
 <table>
+    <h4>Current Worst Movies:</h4>
+        {% for bad in worst %}
+            <tr>
+                <td>{{bad.year}}</td>
+                <td class="title"><a href="/movie/{{bad.key().id()}}">{{bad.title}}</a></td>
+                <td>{{bad.director}}</td>
+                <td>{{bad.country}}</td>
+                <td>{{bad.average}}</td>
+            </tr>
+        {% endfor %}
+</table>
+<table>
     <h4>Most Recent Entries:</h4>
         {% for new in newest %}
             <tr>
