@@ -12,6 +12,18 @@ indexes:
 
 - kind: Entry
   properties:
+  - name: capped_director
+  - name: average
+    direction: desc
+
+- kind: Entry
+  properties:
+  - name: capped_title
+  - name: average
+    direction: desc
+
+- kind: Entry
+  properties:
   - name: director
   - name: average
 
@@ -29,7 +41,8 @@ indexes:
 
 - kind: Entry
   properties:
-  - name: title
+  - name: director
+  - name: year
   - name: average
     direction: desc
 
@@ -37,6 +50,12 @@ indexes:
   properties:
   - name: title
   - name: average
+
+- kind: Entry
+  properties:
+  - name: title
+  - name: average
+    direction: desc
 
 - kind: Entry
   properties:

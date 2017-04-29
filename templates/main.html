@@ -1,47 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Welcome to the KMDB!</h2>
-<h4>Current 10 Best Films:</h4>
+<h2 class='main'>Welcome to the KOFD!</h2>
+<h3 class='main'>Currently there are {{count}} films in the database!</h3>
+<h4>Current {{top_count}} Best Films ({{score}} or better):</h4>
 <table>
     <tr class="header">
-        <td></td>
-        <td>Year</td>
-        <td>Title</td>
-        <td>Director</td>
-        <td>Country</td>
-        <td>Average rating</td>
+        <td class="table_count"></td>
+        <td class="table_year">Year</td>
+        <td class="table_title">Title</td>
+        <td class="table_director">Director</td>
+        <td class="table_country">Country</td>
+        <td class="table_rating">Average rating</td>
     </tr>
-        {% for entry in entries %}
-            <tr>
-                    <td><span class="mycount"></span></td>
-                    <td>{{entry.year}}</td>
-                    <td class="title"><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
-                    <td>{{entry.director}}</td>
-                    <td>{{entry.country}}</td>
-                    <td>{{entry.average}}</td>
-            </tr>
-        {% endfor %}
+    {% for entry in top %}
+        <tr>
+                <td><span class="mycount"></span></td>
+                <td>{{entry.year}}</td>
+                <td class="title"><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
+                <td>{{entry.director}}</td>
+                <td>{{entry.country}}</td>
+                <td>{{entry.average}}</td>
+        </tr>
+    {% endfor %}
 </table>
+<br>
+<h4>Current {{worst_count}} Worst Movies ({{worst_score}} or worse):</h4>
 <table>
-    <h4>Current Worst Movies:</h4>
-        {% for bad in worst %}
-            <tr>
-                <td>{{bad.year}}</td>
-                <td class="title"><a href="/movie/{{bad.key().id()}}">{{bad.title}}</a></td>
-                <td>{{bad.director}}</td>
-                <td>{{bad.country}}</td>
-                <td>{{bad.average}}</td>
-            </tr>
-        {% endfor %}
+    <tr class="header">
+        <td class="table_count"></td>
+        <td class="table_year">Year</td>
+        <td class="table_title">Title</td>
+        <td class="table_director">Director</td>
+        <td class="table_country">Country</td>
+        <td class="table_rating">Average rating</td>
+    </tr>
+    {% for bad in worst %}
+        <tr>
+            <td><span class="mycount2"></span></td>
+            <td>{{bad.year}}</td>
+            <td class="title"><a href="/movie/{{bad.key().id()}}">{{bad.title}}</a></td>
+            <td>{{bad.director}}</td>
+            <td>{{bad.country}}</td>
+            <td>{{bad.average}}</td>
+        </tr>
+    {% endfor %}
 </table>
+<br>
+<h4>Most Recent Entries:</h4>
 <table>
-    <h4>Most Recent Entries:</h4>
+    <tr class="header">
+        <td class="table_year">Year</td>
+        <td class="table_title">Title</td>
+        <td class="table_director">Director</td>
+        <td class="table_country">Country</td>
+        <td class="table_rating">Average rating</td>
+    </tr>
         {% for new in newest %}
             <tr>
                 <td>{{new.year}}</td>
                 <td class="title"><a href="/movie/{{new.key().id()}}">{{new.title}}</a></td>
                 <td>{{new.director}}</td>
+                <td>{{new.country}}</td>
                 <td>{{new.average}}</td>
             </tr>
         {% endfor %}

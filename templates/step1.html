@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+{{title}} ({{year}})
+Directed by {{director}} <br>
+
+<img src="{{poster}}" alt = "Image from {{title}}">
+<p>Featuring {{actors}}</p>
+<p>{{plot}}</p>
+<form method="post" action="/step1/">
+    <input name="title" value={{title}}>
+    <input name="year" value={{year}}>
+    <input name="director" value={{director}}>
+    <input type="submit" value="Yes">
+</form>
+<form method="get" action="/form/">
+    <input type="submit" value="No">
+
+
+{% endblock %}

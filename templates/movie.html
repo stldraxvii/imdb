@@ -18,23 +18,35 @@
         <td>Director</td>
         <td>Country</td>
         <td>Genre</td>
-        <td>IMDB rating</td>
-        <td>Metacritc rating</td>
-        <td>Average rating</td>
+        <td>IMDB</td>
+        <td>Metacritc</td>
+        <td>TMDB</td>
+        <td>Ebert</td>
+        <td>Slant</td>
+        <td>Average</td>
     </tr>
     <tr>
         <td>{{entry.year}}</td>
-        <td><a href="/movie/{{entry.key().id()}}">{{entry.title}}</a></td>
+        <td><a href="http://imdb.com/title/{{entry.imdb_id}}">{{entry.title}}</a></td>
         <td>{{entry.director}}</td>
         <td>{{entry.country}}</td>
         <td>{{entry.genre}}</td>
         <td>{{entry.imdb}}</td>
         <td>{{entry.meta}}</td>
+        <td>{{entry.tmdb}}</td>
+        <td>{{entry.ebert}}</td>
+        {% if entry.slant == "N/A" %}
+        <td>{{entry.slant}}</td>
+        {% else %}
+        <td>{{entry.slant}}/{{entry.slant_max}}</td>
+        {% endif %}
         <td>{{entry.average}}</td>
     </tr>
 </table>
+<img src="{{entry.poster}}" alt = "Image from {{entry.title}}">
+<p>Featuring {{entry.actors}}</p>
+<p>{{entry.plot}}{% if entry.plot2 != None %}{{entry.plot2}}{% endif %}</p>
 <br>
-
 <a class = "button" href="/">Return to homepage</a>
 <a class = "button" href="/form/">Add another movie!</a>
 

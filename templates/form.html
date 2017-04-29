@@ -3,7 +3,7 @@
 
 <h2>Add a movie to the database!</h2>
 <body>
-    <form method="post">
+    <form method="post" action="/step1/">
         <table>
             <tr>
                 <label><td>
@@ -20,6 +20,7 @@
         </table>
         <br>
         <div class="error">{{error}}</div>
+        <div><a href={{link}}>{{error2}}</a></div>
         <br>
         <input type="submit">
     </form>

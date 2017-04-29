@@ -9,24 +9,59 @@
         .error {
             color:red;
         }
+        img {
+            text-align: center;
+        }
+        .main{
+            text-align: center;
+            text-decoration: none;
+        }
+        .rating{
+            font-weight:bolder;
+            color:#aebc0f;
+        }
+        .search{
+            width:1em;
+        }
         h1 {
             text-decoration: underline;
+            text-align: right;
+            margin-right: .5em;
+        }
+        h2 {
+            text-align:center;
+            text-decoration: underline;
+        }
+        h4 {
+            margin-bottom:.5em;
+            font-size: 1.5em;
         }
         body {
             background-color:black;
             color: white;
-            width: 100%;
-            max-width: 100%;
+            width: 99%;
+            max-width: 99%%;
             counter-reset: mycount;           /* Set the counter to 0 */
         }
         header, section, footer {
+            max-width:99%%;
             margin-left:1em;
-            margin-right:1em;
             background-color:#222222;
+            counter-reset: mycount2;
+        }
+        header {
+            margin-right:1.1em;
+            margin-left:180px;
+            align-self:center;
+            text-align: right;
         }
         .mycount:before{
             counter-increment: mycount;      /* Increment the counter */
             content: counter(mycount) ". "; /* Display the counter */
+        }
+        .mycount2:before{
+            counter-increment: mycount2;      /* Increment the counter */
+            content: counter(mycount2) ". "; /* Display the counter */
         }
         nav ul {
         	padding: 0;
@@ -35,7 +70,9 @@
 
         nav ul li {
         	display: inline-block;
-        	margin-right: 1.25em;
+            padding: 4px;
+            margin-right:.2em;
+        	margin-left: .5em;
         }
         input {
             background-color: #222222;
@@ -73,7 +110,8 @@
         }
         .header{
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1em;
+            text-align: center;
         }
         .title {
             font-weight:bold;
@@ -84,24 +122,47 @@
             border-color:white;
             border-style: groove;
             margin:0 auto;
-            padding:0;
+            padding-top: 4px;
+            padding-bottom:4px;
             padding-left: 2px;
             padding-right: 2px;
+
         }
         tr {
             margin: 0 auto;
-            padding-top: 2px;
-            padding-bottom: 2px;
         }
         table {
-            max-width:98%;
+            width:99.4%;
+            padding-right: 0;
+            margin-right: 0;
+        }
+        .table_count {
+            width: 20px;
+        }
+        .table_year {
+            width: 20px;
+        }
+        .table_title {
+            width: 330px;
+        }
+        .table_director {
+             width: 230px;
+        }
+        .table_country {
+            width:220px;
+        }
+        .table_genre {
+            width:200px;
+        }
+        .table_rating {
+            width: 20px;
         }
 
     </style>
 
     <body>
         <h1>
-            <a href='/'>Kemper Movie DataBase</a>
+            <a href='/'>Kemper's Online Film Database</a>
         </h1>
 
         <header>
@@ -114,6 +175,13 @@
                     <li><a href="/alphafilm/">By Film</a></li>
                     <li><a href="/alphadir/">By Director</a></li>
                     <li><a href="/search/">Advanced Search</a></li>
+                    <li>
+                        <form method="post" action="/search/">
+                            <input type="text" name="title">
+                            <input type="submit" value="Search by Title">
+                        </form>
+                    </li>
+
                 </ul>
             </nav>
         </header>

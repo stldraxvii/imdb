@@ -1,18 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h2>Hello!</h2>
+<h2>Here is the database sorted by {{sort}}</h2>
 <table><ol>
     <tr class="header">
-        <td></td>
-        <td>Year</td>
-        <td>Title</td>
-        <td>Director</td>
-        <td>Country</td>
-        <td>Genre</td>
-        <td>IMDB rating</td>
-        <td>Metacritc rating</td>
-        <td>Average rating</td>
+        <td class = "table_count"></td>
+        <td class = "table_year">Year</td>
+        <td class = "table_title">Title</td>
+        <td class = "table_director">Director</td>
+        <td class = "table_country">Country</td>
+        <td class = "table_genre">Genre</td>
+        <td class = "table_rating">I</td>
+        <td class = "table_rating">M</td>
+        <td class = "table_rating">T</td>
+        <td class = "table_rating">E</td>
+        <td class = "table_rating">S</td>
+        <td class = "table_rating">Avg</td>
     </tr>
         {% for entry in entries %}
             <tr>
@@ -24,7 +26,14 @@
                     <td>{{entry.genre}}</td>
                     <td>{{entry.imdb}}</td>
                     <td>{{entry.meta}}</td>
-                    <td>{{entry.average}}</td>
+                    <td>{{entry.tmdb}}</td>
+                    <td>{{entry.ebert}}</td>
+                    {% if entry.slant == "N/A" %}
+                    <td>{{entry.slant}}</td>
+                    {% else %}
+                    <td>{{entry.slant}}/{{entry.slant_max}}</td>
+                    {% endif %}
+                    <td class="rating">{{entry.average}}</td>
                 </li>
             </tr>
         {% endfor %}

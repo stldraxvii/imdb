@@ -1,38 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Look up a movie!</h2>
-<h3>Use any or all fields!</h3>
-<h4>
+<h2>Look up a movie! Use any or all fields!</h2>
+<h3>
     Please note queries must be exact! <br>
-    Results will be returned sorted by rating
-</h4>
+    Results will be returned sorted by rating.
+</h3>
 <body>
     <form method="post">
-        <table>
+        <table class='search'>
             <tr>
                 <label><td>
                     <div>Title</div>
-                    <input type="text" name="title">
-                </label></td>
-                <label><td>
-                    <div>Year</div>
-                    <input type="text" name="year">
+                    <input type="text" name="title" value="{{tit}}">
                 </label></td>
                 <label><td>
                     <div>Director</div>
                     <input type="text" name="director">
+                </label></td>
+                <label><td>
+                    <div>Year</div>
+                    <input type="text" name="year">
                 </label></td>
             </tr>
         </table>
         <br>
         <div class="error">{{error}}</div>
         <br>
-        <input type="submit">
+        <input type="submit" value="Search!">
     </form>
+    <br>
+    <br>
+    <h2>Search for films in a range of years!</h2>
+    <h3>If you want films from just one year, use the form above.</h3>
+    <form method="post" action="/year/">
+        <table class='search'>
+            <tr>
+                <label><td>
+                    <div>Start Year</div>
+                    <input type="text" name="start-year">
+                </label</td>
+                <label><td>
+                    <div>End Year</div>
+                    <input type="text" name="end-year">
+                </label</td>
+            </tr>
+        </table>
+        <br>
+        <div class="error">{{error2}}</div>
+        <br>
+        <input type="submit" value="Search!">
+    </form>
+    <br>
+
+    <div1></div1>
+    <script>
+        (function() {
+            var cx = '008457543585458637199:svut0j3qjew';
+            var gcse = document.createElement('script');
+            gcse.type = 'text/javascript';
+            gcse.async = true;
+            gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(gcse, s);
+        })();
+    </script>
+    <gcse:search></gcse:search>
+    <div2></div2>
+
 </body>
 
 
-
+<!-- api_key = AIzaSyAF28IZWqYyWjnHxNFoBzmWwl21h4JxhQE -->
 
 {% endblock %}
