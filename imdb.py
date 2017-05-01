@@ -11,11 +11,6 @@ def StarsToScore(stars,max):
 
     return score
 
-def FixStarWars(title):
-    title = title.replace(':'," --")
-    title = title.replace(' - ',': ')
-    return title
-
 
 def main():
 

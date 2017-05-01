@@ -16,10 +16,12 @@
 # limitations under the License.
 #
 
-import os, sys, cgi, webapp2, jinja2, urllib2, json
+import os, sys, ast, cgi, webapp2, jinja2, urllib2, json
 from xml.dom import minidom
 from google.appengine.ext import db
-from imdb import StarsToScore, FixStarWars
+from imdb import StarsToScore
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
@@ -64,22 +66,24 @@ class Handler(webapp2.RequestHandler):
 
     def render_list(self, sort, order="ASC"):
         entries = db.GqlQuery("SELECT * FROM Entry ORDER BY {0} {1}".format(sort, order))
-        self.render("list.html", sort = sort, entries = entries)
+        count = entries.count()
+        self.render("list.html", sort = sort, entries = entries, count = count)
 
 
 class MainHandler(Handler):
     def get(self):
         whole = db.GqlQuery("SELECT * FROM Entry ORDER BY average DESC")
         count = whole.count()
-        #score = float(whole[9].average)
-        score = 8.5
+
+        score = float(whole[49].average)
+        # score = 8.8
         adj_score = str(score-0.005)
         top = db.GqlQuery("SELECT * FROM Entry WHERE average > '{0}' ORDER BY average DESC".format(adj_score))
         top_count = top.count()
 
         worst_number = int(count)-10
         #worst_score = float(whole[worst_number].average)
-        worst_score = 4.0
+        worst_score = 5.0
         worst_score_adj = str(worst_score+0.005)
         worst = db.GqlQuery("SELECT * FROM Entry WHERE average < '{0}' ORDER BY average ASC".format(worst_score_adj))
         worst_count = worst.count()
@@ -96,11 +100,14 @@ class FormHandler(Handler):
         error = self.request.get("error")
         self.render_form(title=title, error=error)
 
+
+class Step1Handler(Handler):
     def post(self):
         title = self.request.get("title")
         year = self.request.get("year")
         title = title.replace('&','%26')
         fixed_title = title.replace(" ","+")
+
         scores = {"imdb":"N/A","tmdb":"N/A","meta":"N/A","ebert":"N/A","slant":"N/A"}
         stars = {"ebert":"N/A","slant":"N/A"}
         max_stars = {"ebert":"N/A","slant":"N/A"}
@@ -116,7 +123,7 @@ class FormHandler(Handler):
 
         if imdb.getElementsByTagName("error").item.__self__:
             error = "Please enter the correct title of a movie (check your spelling)!"
-            self.render_form (title=title,error=error)
+            self.render_form(title=title,error=error)
         else:
             id = imdb.getElementsByTagName("movie")[0].attributes.getNamedItem("imdbID").value
             movie_title = imdb.getElementsByTagName("movie")[0].attributes.getNamedItem("title").value
@@ -130,23 +137,13 @@ class FormHandler(Handler):
             plot = imdb.getElementsByTagName("movie")[0].attributes.getNamedItem("plot").value
             poster = imdb.getElementsByTagName("movie")[0].attributes.getNamedItem("poster").value
 
-            #THE MOVIE DB QUERY
-            tmdb_page = urllib2.urlopen("https://api.themoviedb.org/3/find/{0}?api_key=25879c34855c16b1d1e71076dc10f991&language=en-US&external_source=imdb_id".format(id))
-            tmdb_contents = tmdb_page.read()
-            tmdb = json.loads(tmdb_contents)
-
-            results = tmdb.get('movie_results')
-            tmdb_score = results[0].get('vote_average')
-
             scores['imdb'] = imdb_score
 
             if meta_score != "N/A":
                 fixed_meta_score = float(meta_score)/10
-                scores['meta'] = fixed_meta_score
+                scores['meta'] = str(fixed_meta_score)
 
-            if str(tmdb_score) != "0.0":
-                scores['tmdb'] = str(tmdb_score)
-
+            ##Check if duplicate
             duplicate = False
             entries = db.GqlQuery("SELECT * FROM Entry")
             for entry in entries:
@@ -161,208 +158,147 @@ class FormHandler(Handler):
                 error2 = "You can find {0} here".format(entries[0].title)
                 self.render_form(error=error1, link = link, error2=error2)
             else:
-                self.render("step1.html",title=title,year=year,director=director,poster=poster,plot=plot,actors=actors)
+                #THE MOVIE DB QUERY
+                tmdb_page = urllib2.urlopen("https://api.themoviedb.org/3/find/{0}?api_key=25879c34855c16b1d1e71076dc10f991&language=en-US&external_source=imdb_id".format(id))
+                tmdb_contents = tmdb_page.read()
+                tmdb = json.loads(tmdb_contents)
+                results = tmdb.get('movie_results')
 
-class Step1Handler(Handler):
+                if results != []:
+                    tmdb_score = results[0].get('vote_average')
+                    tmdb_score = str(tmdb_score)
+                    if tmdb_score != "0.0":
+                        scores['tmdb'] = tmdb_score
+
+                if movie_title == "Banshun":
+                    movie_title = "Late Spring"
+                    fixed_title = "Late+Spring"
+                if movie_title == "Birdman or (The Unexpected Virtue of Ignorance)":
+                    fixed_title = "Birdman"
+                if movie_title == "E.T. the Extra-Terrestrial":
+                    fixed_title = "E.T.+the+Extra-Terrestrial"
+
+                self.render("step1.html",id=id,fixed_title=fixed_title,movie_title=movie_title,year=year,
+                    director=director,actors=actors,country=country,genre=genre,plot=plot,poster=poster,
+                    scores=scores,stars=stars,max_stars=max_stars)
+
+
+class Step2Handler(Handler):
     def post(self):
-        title = self.request.get("title")
-        year = self.request.get("year")
-        director = self.request.get("director")
-        poster = self.request.get("poster")
-        plot = self.request.get("plot")
-        actors = self.request.get("actors")
-        self.render("step1.html",title=title,year=year,director=director,poster=poster,plot=plot,actors=actors)
-                # if movie_title == "Banshun":
-                #     movie_title = "Late Spring"
-                #     fixed_title = "Late+Spring"
-                # if movie_title == "Birdman or (The Unexpected Virtue of Ignorance)":
-                #     fixed_title = "Birdman"
-                # if movie_title == "E.T. the Extra-Terrestrial":
-                #     fixed_title = "E.T.+the+Extra-Terrestrial"
-                # ##Google Search
-                # try:
-                #     google_page = urllib2.urlopen("https://www.googleapis.com/customsearch/v1?q={0}+{1}&cx=008457543585458637199:svut0j3qjew&key=AIzaSyAF28IZWqYyWjnHxNFoBzmWwl21h4JxhQE".format(fixed_title, year))
-                #     google_contents = google_page.read()
-                #     google = json.loads(google_contents)
-                #
-                #     items = google.get('items')
-                #     if items != None:
-                #         for item in items:
-                #             # Slant Magazine
-                #             if item["displayLink"] == "www.slantmagazine.com":
-                #                 slant_title = movie_title.replace(" or (The Unexpected Virtue of Ignorance)","")
-                #                 slant_title = slant_title.replace(": Love's Struggle Throughout the Ages","")
-                #                 slant_title = slant_title.replace("E.T. ", "E T ")
-                #                 slant_title = slant_title.replace("L.A.", "L A")
-                #                 slant_title = slant_title.replace(u'é', 'e')
-                #                 slant_title = slant_title.replace("Journey to Italy", "Voyage to Italy")
-                #                 slant_title = slant_title.replace("The Spirit of the Beehive", "Spirit of the Beehive")
-                #                 slant_title = slant_title.replace("Fellini's", "Fellini")
-                #                 slant_title = slant_title.replace(u"WALL·E","wall-e")
-                #                 slant_title = slant_title.replace("Hellboy II", "hellboy ii")
-                #                 slant_title = slant_title.replace("Dead II", "Dead 2")
-                #                 slant_title = slant_title.replace("&", "and")
-                #                 slant_title = slant_title.replace(" ", "-")
-                #                 slant_title = slant_title.replace("---", "-")
-                #                 slant_title = slant_title.replace("'", "")
-                #                 slant_title = slant_title.replace(":", "")
-                #                 slant_title = slant_title.replace(".", "")
-                #                 slant_title = slant_title.replace("!", "")
-                #                 slant_title = slant_title.replace("?", "")
-                #                 slant_title = slant_title.replace(",", "")
-                #                 slant_title = slant_title.lower()
-                #
-                #                 url = "http://www.slantmagazine.com/film/review/"+slant_title
-                #                 url2 = "http://www.slantmagazine.com/film/review/"+slant_title.replace("the-", "")
-                #                 url3 = "http://www.slantmagazine.com/film/review/"+"the-"+slant_title
-                #                 url4 = "http://www.slantmagazine.com/film/review/"+slant_title.replace("-", "")
-                #                 url5 = "http://www.slantmagazine.com/film/review/"+slant_title+"-"+year
-                #                 url6 = "http://www.slantmagazine.com/film/review/"+slant_title+"-1136"
-                #                 url7 = "http://www.slantmagazine.com/film/review/"+slant_title+"-5754"
-                #                 url8 = "http://www.slantmagazine.com/film/review/slant_title"+slant_title.replace("Dr.", "Drive")
-                #                 if (item['link'] == url or item['link'] == url2 or item['link'] == url3 or item['link'] == url4 or
-                #                     item['link'] == url5 or item['link'] == url6 or item['link'] == url7 or item['link'] == url8):
-                #                     slant_pagemap = item.get('pagemap')
-                #                     slant_rating_section = slant_pagemap.get('rating')
-                #                     slant_max = slant_rating_section[0].get('bestrating')
-                #                     slant_max = str(slant_max)
-                #                     slant_stars = slant_rating_section[0].get('ratingvalue')
-                #                     slant_stars = str(slant_stars)
-                #
-                #                     slant_score = StarsToScore(slant_stars,slant_max)
-                #                     scores['slant'] = slant_score
-                #                     stars['slant'] = slant_stars
-                #                     max_stars['slant'] = slant_max
-                #
-                #                 #Pull a DVD review if no film review available
-                #                 if scores['slant'] != 'N/A':
-                #                     break
-                #                 elif scores['slant'] == 'N/A':
-                #                     url = "http://www.slantmagazine.com/dvd/review/"+slant_title
-                #                     url2 = "http://www.slantmagazine.com/dvd/review/"+slant_title.replace("the-", "")
-                #                     url3 = "http://www.slantmagazine.com/dvd/review/"+"the-"+slant_title
-                #                     url4 = "http://www.slantmagazine.com/dvd/review/"+slant_title.replace("-", "")
-                #                     url5 = "http://www.slantmagazine.com/dvd/review/"+slant_title+"-2048"
-                #                     url6 = "http://www.slantmagazine.com/dvd/review/"+slant_title+"-"+year
-                #                     url7 = "http://www.slantmagazine.com/dvd/review/"+slant_title+"-"+year+"-br"
-                #                     url8 = "http://www.slantmagazine.com/dvd/review/"+slant_title+"-bd"
-                #                     url9 = "http://www.slantmagazine.com/dvd/review/"+slant_title+"-2016"
-                #                     url10 = "http://www.slantmagazine.com/film/review/slant_title"+slant_title.replace("Dr.", "Drive")
-                #                     if (item['link'] == url or item['link'] == url2 or item['link'] == url3 or item['link'] == url4 or
-                #                         item['link'] == url5 or item['link'] == url6 or item['link'] == url7 or item['link'] == url8 or
-                #                         item['link'] == url9 or item['link'] == url10):
-                #                         slant_pagemap = item.get('pagemap')
-                #                         slant_rating_section = slant_pagemap.get('rating')
-                #                         slant_max = slant_rating_section[0].get('bestrating')
-                #                         slant_max = str(slant_max)
-                #                         slant_stars = slant_rating_section[0].get('ratingvalue')
-                #                         slant_stars = str(slant_stars)
-                #
-                #                         slant_score = StarsToScore(slant_stars,slant_max)
-                #                         scores['slant'] = slant_score
-                #                         stars['slant'] = slant_stars
-                #                         max_stars['slant'] = slant_max
-                #                         break
-                #         for item in items:
-                #             #Roger Ebert score
-                #             if item["displayLink"] == 'www.rogerebert.com':
-                #                 ebert_pagemap = item.get('pagemap')
-                #                 result = ebert_pagemap.get("movie")
-                #
-                #                 if result != None:
-                #                     if (ebert_pagemap.get('review')[1].get("name") == movie_title or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.title() or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("The ", "") or
-                #                     ebert_pagemap.get('review')[1].get("name") == "The " + movie_title.replace("Thieves", "Thief") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("Hard 2", "Hard 2: Die Harder") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("The City of Lost Children", "City Of Lost Children") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(u'Léon: ',"") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Three Colors: ',"") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('MASH',"M*A*S*H") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Twelve',"12") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(u"WALL·E","Wall-E") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Chain Saw',"Chainsaw") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(u'é','e') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("La Grande Illusion", "Grand Illusion") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("La Haine", "Hate (La Haine)") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("Kill Bill: Vol. ", "Kill Bill, Volume ") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("Fellini's", "Fellini") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("Dead II", "Dead 2: Dead by Dawn") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("Goodfellas", "GoodFellas") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("The Lord of", "Lord of") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("The Force Awakens", "Episode VII - The Force Awakens") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(" Is ", " is ") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(" or (The Unexpected Virtue of Ignorance)","") or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(' n ',' N ') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('.','') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(':','') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(':',',') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('!','') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace("'",u'’') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('-','--') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(' ','/') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(' with ', ' With ') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(' vs. ', ' Vs. ') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Se7en', 'Seven') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(' or:', ' Or:') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace(': Episode IV - A New Hope', '') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Star Wars: Episode V - ', '') or
-                #                     ebert_pagemap.get('review')[1].get("name") == movie_title.replace('Star Wars: Episode VI - ', '') or
-                #                     ebert_pagemap.get('review')[1].get("name") == FixStarWars(movie_title) or
-                #                     ebert_pagemap.get('review')[1].get("name") == FixStarWars(movie_title).replace(' of the ', ' Of The ')):
-                #                         ebert_rating_section = ebert_pagemap.get('rating')
-                #                         if ebert_rating_section != None:
-                #                             ebert_max = ebert_rating_section[0].get('bestrating')
-                #                             ebert_max = str(ebert_max)
-                #                             ebert_stars = ebert_rating_section[0].get('ratingvalue')
-                #                             ebert_stars = str(ebert_stars)
-                #
-                #                             ebert_score = StarsToScore(ebert_stars,ebert_max)
-                #                             scores['ebert'] = ebert_score
-                #                             stars['ebert'] = ebert_stars
-                #                             max_stars['ebert'] = ebert_max
-                #                         break
-                #     total = 0
-                #     count = 0
-                #     for site in scores:
-                #         if scores[site] != "N/A":
-                #             score = scores[site]
-                #             total = total + float(score)
-                #             count = count + 1
-                #
-                #     average = total / count
-                #     average = round(average,2)
-                #     average = str(average)
-                #
-                #     capped_title = movie_title.upper()
-                #     capped_director = director.upper()
-                #     tmdb_score = str(tmdb_score)
-                #
-                #     plot2 =""
-                #     if len(plot) >= 1500:
-                #         plot2 = plot[1450:]
-                #         plot = plot[:1450]
-                #
-                #     a = Entry(year = year, title = movie_title, capped_title = capped_title, director = director,
-                #         capped_director = capped_director, actors = actors, country = country, genre = genre,
-                #         plot = plot, plot2 = plot2, imdb = imdb_score, meta = meta_score, tmdb = scores['tmdb'],
-                #         ebert = stars['ebert'], ebert_max = max_stars['ebert'], slant = stars['slant'],
-                #         slant_max = max_stars['slant'], average = average, poster = poster, imdb_id = id)
-                #
-                #     a.put()
-                #     self.redirect("/movie/{0}".format(a.key().id()))
-                # except urllib2.HTTPError as err:
-                #     if err.code == 403:
-                #         error = "403 error: You have searched google 100 times today"
-                #         self.render_form(error=error)
-                #     else:
-                #         error = "Unknown google error"
-                #         self.render_form(error=error)
+        data = self.request.get("info1")
+        data = data.encode('utf-8')
+        info1 = data.split('","')
+
+        fixed_title = info1[1]
+        movie_title = info1[2]
+        year = info1[3]
+
+        ##Google Search
+        try:
+            google_page = urllib2.urlopen("https://www.googleapis.com/customsearch/v1?q={0}+{1}&cx=008457543585458637199:svut0j3qjew&key=AIzaSyAF28IZWqYyWjnHxNFoBzmWwl21h4JxhQE".format(fixed_title, year))
+            google_contents = google_page.read()
+            google = json.loads(google_contents)
+
+            items = google.get('items')
+            slant_list = []
+            ebert_list = []
+            if items != None:
+                for item in items:
+                    # Slant Magazine
+                    if item["displayLink"] == "www.slantmagazine.com":
+                        slant_list.append(item)
+
+                    #Roger Ebert score
+                    if item["displayLink"] == 'www.rogerebert.com':
+                        ebert_list.append(item)
+            self.render("step2.html", info1=data, slant_list=slant_list, ebert_list=ebert_list)
+
+        except urllib2.HTTPError as err:
+            if err.code == 403:
+                error = "403 error: You have searched google 100 times today"
+                self.render_form(error=error)
+            else:
+                error = "Unknown google error"
+                self.render_form(error=error)
 
 
 class MovieHandler(Handler):
     def get(self):
         self.redirect("/form/")
+
+    def post(self):
+        data = self.request.get("info1")
+        info1 = data.split('","')
+        id = info1[0]
+        id = id.replace('"','')
+        id = id.replace(' ','')
+        fixed_title = info1[1]
+        movie_title = info1[2]
+        year = info1[3]
+        director = info1[4]
+        actors  = info1[5]
+        country = info1[6]
+        genre = info1[7]
+        plot = info1[8]
+        poster = info1[9]
+
+        scores = info1[10].encode('utf-8')
+        scores = ast.literal_eval(scores)
+        stars = info1[11].encode('utf-8')
+        stars = ast.literal_eval(stars)
+        max_stars = info1[12].encode('utf-8')
+        max_stars = max_stars.replace('"','')
+        max_stars = ast.literal_eval(max_stars)
+
+        #Slant
+        slant = self.request.get("slant")
+        if slant != "":
+            slant = ast.literal_eval(slant)
+            slant_max = slant['pagemap']['rating'][0]['bestrating']
+            slant_stars = slant['pagemap']['rating'][0]['ratingvalue']
+            slant_score = StarsToScore(slant_stars,slant_max)
+            scores['slant'] = slant_score
+            stars['slant'] = slant_stars
+            max_stars['slant'] = slant_max
+
+        # Ebert
+        ebert = self.request.get("ebert")
+        if ebert !="":
+            ebert = ast.literal_eval(ebert)
+            ebert_max = ebert['pagemap']['rating'][0]['bestrating']
+            ebert_stars = ebert['pagemap']['rating'][0]['ratingvalue']
+            ebert_score = StarsToScore(ebert_stars,ebert_max)
+            scores['ebert'] = ebert_score
+            stars['ebert'] = ebert_stars
+            max_stars['ebert'] = ebert_max
+
+        total = 0
+        count = 0
+        for site in scores:
+            if scores[site] != "N/A":
+                score = scores[site]
+                total = total + float(score)
+                count = count + 1
+        average = total / count
+        average = round(average,2)
+        average = str(average)
+
+        capped_title = movie_title.upper()
+        capped_director = director.upper()
+
+        plot2 =""
+        if len(plot) >= 1500:
+            plot2 = plot[1450:]
+            plot = plot[:1450]
+
+        a = Entry(year = year, title = movie_title, capped_title = capped_title, director = director,
+            capped_director = capped_director, actors = actors, country = country, genre = genre,
+            plot = plot, plot2 = plot2, imdb = scores['imdb'], meta = scores['meta'], tmdb = scores['tmdb'],
+            ebert = stars['ebert'], ebert_max = max_stars['ebert'], slant = stars['slant'],
+            slant_max = max_stars['slant'], average = average, poster = poster, imdb_id = id)
+        a.put()
+
+        self.redirect("/movie/{0}".format(a.key().id()))
 
 
 class ViewEntryHandler(Handler):
@@ -414,20 +350,16 @@ class SearchHandler(Handler):
         title = self.request.get("title")
         year = self.request.get("year")
         director = self.request.get("director")
-        entries = ''
         count = 0
 
         if title != "":
-            fixed_title = title.upper()
-            fixed_title = "'" + fixed_title + "'"
-            fixed_title = "capped_title = " + fixed_title
+            fixed_title = "capped_title = " + "'" + title.upper() + "'"
             count = count + 1
         else:
             fixed_title = ""
 
         if year != "":
             year ="'" + year + "'"
-
             if count == 1:
                 year = "AND year = " + year
                 count = 0
@@ -436,9 +368,7 @@ class SearchHandler(Handler):
             count = count + 1
 
         if director != "":
-            director = director.upper()
-            director = "'" + director + "'"
-
+            director = "'" + director.upper() + "'"
             if count == 1:
                 director = "AND capped_director = "  + director
                 count = 0
@@ -452,13 +382,14 @@ class SearchHandler(Handler):
             search = ""
 
         entries = db.GqlQuery("SELECT * FROM Entry {0} ORDER BY average DESC".format(search))
+        count = entries.count()
         sort = search.replace("WHERE", "where")
         sort = sort.replace("AND", "and")
         sort = sort.replace('=', 'is')
         sort = sort.replace("'", " ")
         sort = "average " + sort
         if entries.count() > 0:
-            self.render("list.html", entries = entries, sort=sort)
+            self.render("list.html", entries = entries, sort=sort, count=count)
         else:
             error = "Sorry, but we could not find your {0}. Try checking your spelling, or adding your movie to the database!".format(fixed_title)
             self.render("search.html", title = title, error = error)
@@ -518,5 +449,6 @@ app = webapp2.WSGIApplication([
     ('/alphadir/', AlphaDirHandler),
     ('/year/', YearSearch),
     ('/print/', PrintHandler),
-    ('/step1/', Step1Handler)
+    ('/step1/', Step1Handler),
+    ('/step2/', Step2Handler)
 ], debug=True)

@@ -1,20 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
 
-{{title}} ({{year}})
-Directed by {{director}} <br>
-
+<h3>{{movie_title}} ({{year}})</h3>
+<p>
+    Directed by: {{director}}<br>
+    Imdb score:{{scores['imdb']}}<br>
+    Metacritc score:{{scores['meta']}}<br>
+    Tmdb score:{{scores['tmdb']}}
+</p>
 <img src="{{poster}}" alt = "Image from {{title}}">
 <p>Featuring {{actors}}</p>
 <p>{{plot}}</p>
-<form method="post" action="/step1/">
-    <input name="title" value={{title}}>
-    <input name="year" value={{year}}>
-    <input name="director" value={{director}}>
-    <input type="submit" value="Yes">
-</form>
-<form method="get" action="/form/">
-    <input type="submit" value="No">
+<table>
+    <form method="post" action="/step2/">
+        <h3><label>Is this the right film?</label></h3>
+        <tr>
+            <input type='hidden' name="info1" value = '"{{id}}","{{fixed_title}}","{{movie_title}}","{{year}}","{{director}}","{{actors}}","{{country}}","{{genre}}","{{plot}}","{{poster}}","{{scores}}","{{stars}}","{{max_stars}}"'/>
+            <td><input type="submit" value="Yes"></td>
+    </form>
+    <form method="get" action="/form/">
+            <td><input type="submit" value="No"></td>
+        </tr>
+    </form>
+</table>
 
 
 {% endblock %}

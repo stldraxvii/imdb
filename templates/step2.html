@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Ebert</h3>
+<form method='post' action='/movie/'>
+{% for item in ebert_list%}
+    <p><input type='radio' name = 'ebert' value="{{item}}"/>
+        {{item.pagemap.movie[0].name}} <br>
+        <b>Score is {{item.pagemap.rating[0].ratingvalue}}/{{item.pagemap.rating[0].bestrating}}</b><br>
+        {{item.pagemap.review[0].reviewdate}}<br>
+    </p>
+{% endfor %}
+
+<h3>Slant</h3>
+{% for item in slant_list%}
+    <p><input type='radio' name = 'slant' value="{{item}}"/>
+        {{item.pagemap.metatags[0].title}}<br>
+        {% if item.pagemap.moviereview  %}
+            Directed by {{item.pagemap.moviereview[0].directed_by}}<br>
+        {% endif %}
+        <b>Rating is {{item.pagemap.rating[0].ratingvalue}}/{{item.pagemap.rating[0].bestrating}}</b><br>
+    </p>
+{% endfor %}
+<input type='hidden' name="info1" value = "{{info1}}"/>
+
+
+<input type='submit'/>
+</form>
+
+
+{% endblock %}
